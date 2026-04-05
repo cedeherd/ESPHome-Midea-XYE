@@ -378,8 +378,10 @@ void ClimateMideaXYE::ParseResponse(uint8_t cmdSent) {
           this->update_current_temperature_from_sensors_(need_publish);
 
 #ifndef SET_TARGET_TEMP_ON_QUERY
-          // Target temperature always comes in as C, but user may want it in F.
-          update_property(this->target_temperature, static_cast<float>(RXData[RX_C0_BYTE_SET_TEMP]), need_publish);
+          // Temperature is raw Celsius; bit 6 (SET_TEMP_STATUS_FLAG / 0x40) may be set
+          // by the unit in certain states and must be masked out before use.
+          update_property(this->target_temperature, static_cast<float>(RXData[RX_C0_BYTE_SET_TEMP] & SET_TEMP_VALUE_MASK),
+                          need_publish);
 #endif
 
           if ((this->mode == climate::CLIMATE_MODE_HEAT) && (RXData[RX_C0_BYTE_FAN_MODE] & 0x0F) != 0x00) {
