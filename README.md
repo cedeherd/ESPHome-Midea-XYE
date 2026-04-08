@@ -10,11 +10,15 @@ For detailed protocol documentation, see [PROTOCOL.md](esphome/components/midea_
 
 ### Acknowledgments
 
-Kudos to these projects:
+Kudos to these projects and people:
 - Reverse engineering of the protocol: https://codeberg.org/xye/xye
-- Working implementation using ESP32: https://github.com/Bunicutz/ESP32_Midea_RS485
-- Working implementation by wtahler: https://github.com/wtahler/esphome-mideaXYE-rs485
+- Working implementation using ESP32 by @Bunicutz: https://github.com/Bunicutz/ESP32_Midea_RS485
+- Working implementation by @wtahler: https://github.com/wtahler/esphome-mideaXYE-rs485
 - Fully integrated Midea Climate component: https://github.com/esphome/esphome/tree/dev/esphome/components/midea
+- ESPHome external component foundation by @exciton: https://github.com/exciton/esphome
+- Key contributions and inspiration by @mdrobnak: https://github.com/mdrobnak/esphome/tree/units_switch
+- Static pressure protocol analysis by @rymo
+- Home Assistant community discussion and contributions: https://community.home-assistant.io/t/midea-a-c-via-local-xye/857679
 
 ## Hardware Requirements
 
@@ -206,13 +210,24 @@ Example debug output:
 ## Features
 
 ### What Works
-- Setting mode (off, auto, fan, cool, heat, dry)
+- Setting mode (off, fan, cool, heat, dry, auto/HEAT_COOL; see note below — this does not make the indoor unit switch modes on its own)
 - Setting temperature (can send in Celsius or Fahrenheit; handles AC results in both; must manually set in YAML)
 - Setting fan mode (auto, low, medium, high)
 - Reading inside and outside air temperatures
 - Reading inside coil temperature and outside coil temperature
 - Reading timer start/stop times (set by remote)
 - Follow-Me temperature - automatically sends room temperature from a configured sensor to the AC unit. Updates on sensor state changes and every 30 seconds.
+- Reading current mode (HEAT or COOL) as commanded by the Midea proprietary thermostat when one is connected to the XYE bus
+
+> **Note on AUTO mode:** The **indoor unit itself has no AUTO mode** — it can only ever be
+> in HEAT or COOL. The apparent "AUTO" behaviour comes entirely from the **Midea proprietary
+> thermostat (tstat)**, which contains its own internal temperature sensor and runs the
+> switching logic on-device: it periodically sends HEAT or COOL commands to the indoor unit
+> based on that sensor reading.  When the Midea tstat is disconnected from the bus the indoor
+> unit stays in whichever mode it was last commanded — it will **never** switch on its own.
+> This component can read the current HEAT/COOL state that the tstat commanded, but has no
+> access to the tstat's internal sensor and cannot replicate its logic.  See the
+> [Smart Thermostat](#smart-thermostat) section below for a Home Assistant–level replacement.
 
 ### Known Issues
 - Current reading always shows 255
@@ -230,9 +245,35 @@ Example debug output:
 
 ## Smart Thermostat
 
-Smart thermostat features (preset-based temperature management, inside/outside sensor logic, Home/Sleep/Away modes) are implemented as a Home Assistant-level virtual climate device:
+### Why AUTO mode requires a smart thermostat component
+
+The **Midea indoor unit has no AUTO mode of its own** — it can only operate in HEAT or COOL
+(or FAN, DRY, OFF). The switching logic that makes it feel like "auto" lives entirely inside
+the **Midea proprietary thermostat (tstat)**, a separate device connected to the same XYE/CCM
+RS-485 bus. The tstat carries its own internal temperature sensor and runs a simple control
+loop on-device: when the room is too cold it sends a HEAT command to the indoor unit; when the
+room is too warm it sends a COOL command. The indoor unit just obeys.
+
+**If you remove the Midea tstat from the bus, the indoor unit will never switch between HEAT
+and COOL on its own** — it stays in whichever mode it received last.
+
+This ESP component cannot replicate the tstat's role because:
+
+1. The tstat's internal sensor is proprietary and inaccessible over the XYE bus.
+2. The component does not currently implement the built-in smart thermostat control loop that
+   periodically decides when to send the HEAT/COOL switching commands the tstat normally provides.
+
+A software replacement that replicates exactly what the Midea tstat does — but using
+Home Assistant sensors instead of the proprietary hardware sensor, and adding configurable
+comfort bands, named presets (Home / Sleep / Away), and outside-temperature awareness — is the
+companion HACS component:
 
 👉 **[HomeOps/HASS-Smart-Climate](https://github.com/HomeOps/HASS-Smart-Climate)**
+
+Install it via HACS, point it at the climate entity created by this component (for example,
+`climate.<your_name>`), and configure your comfort temperature ranges for each preset. The
+smart thermostat then drives the real device, sending HEAT or COOL commands exactly as the
+Midea tstat would, while keeping its setpoint at the midpoint of the active range.
 
 ## Community
 

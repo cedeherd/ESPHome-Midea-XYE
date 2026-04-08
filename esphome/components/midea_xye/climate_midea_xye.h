@@ -27,7 +27,6 @@ using xye::OperationMode;
 using xye::FanMode;
 using xye::FollowMeSubcommand;
 using xye::ControlState;
-using xye::ResponseCode;
 using xye::TransmitData;
 using xye::ReceiveData;
 
@@ -53,6 +52,7 @@ constexpr uint8_t FAN_MODE_OFF = static_cast<uint8_t>(FanMode::FAN_OFF);
 constexpr uint8_t FAN_MODE_HIGH = static_cast<uint8_t>(FanMode::FAN_HIGH);
 constexpr uint8_t FAN_MODE_MEDIUM = static_cast<uint8_t>(FanMode::FAN_MEDIUM);
 constexpr uint8_t FAN_MODE_LOW = static_cast<uint8_t>(FanMode::FAN_LOW);
+// FAN_AUTO_FLAG (0x80) and FAN_SPEED_MASK (0x0F) are defined in xye.h and available in this namespace.
 
 constexpr uint8_t TEMP_SET_FAN_MODE = xye::TEMP_FAN_MODE;
 
@@ -72,7 +72,7 @@ constexpr uint8_t TIMER_16HOUR = static_cast<uint8_t>(xye::TimerFlags::TIMER_16H
 constexpr uint8_t TIMER_INVALID = static_cast<uint8_t>(xye::TimerFlags::INVALID);
 
 constexpr uint8_t FOLLOWME_SUBCOMMAND_UPDATE = static_cast<uint8_t>(FollowMeSubcommand::UPDATE);
-constexpr uint8_t FOLLOWME_SUBCOMMAND_STATIC_PRESSURE = static_cast<uint8_t>(FollowMeSubcommand::STATIC_PRESSURE);
+constexpr uint8_t FOLLOWME_SUBCOMMAND_STOP = static_cast<uint8_t>(FollowMeSubcommand::STOP);
 constexpr uint8_t FOLLOWME_SUBCOMMAND_INIT = static_cast<uint8_t>(FollowMeSubcommand::INIT);
 
 // SERVER Response compatibility (same as client commands)
@@ -86,12 +86,6 @@ constexpr uint8_t CAPABILITIES_SWING = static_cast<uint8_t>(xye::Capabilities::S
 
 constexpr uint8_t OP_FLAG_WATER_PUMP = static_cast<uint8_t>(xye::OperationFlags::WATER_PUMP);
 constexpr uint8_t OP_FLAG_WATER_LOCK = static_cast<uint8_t>(xye::OperationFlags::WATER_LOCK);
-
-constexpr uint8_t COMMAND_UNKNOWN = static_cast<uint8_t>(ResponseCode::UNKNOWN);
-constexpr uint8_t RESPONSE_UNKNOWN = static_cast<uint8_t>(ResponseCode::OK);
-constexpr uint8_t RESPONSE_UNKNOWN1 = static_cast<uint8_t>(ResponseCode::UNKNOWN1);
-constexpr uint8_t RESPONSE_UNKNOWN2 = static_cast<uint8_t>(ResponseCode::UNKNOWN2);
-constexpr uint8_t RESPONSE_UNKNOWN3 = static_cast<uint8_t>(ResponseCode::UNKNOWN3);
 
 using climate::ClimateAction;
 using climate::ClimateCall;
