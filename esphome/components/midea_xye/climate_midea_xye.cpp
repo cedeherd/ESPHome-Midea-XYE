@@ -1,8 +1,7 @@
 #ifdef USE_ARDUINO
 
-#include "climate_midea_xye.h"
-
 #include "esphome/core/log.h"
+#include "climate_midea_xye.h"
 
 namespace esphome {
 namespace midea {
@@ -68,7 +67,9 @@ void ClimateMideaXYE::setup() {
   queuedCommand = ControlState::WAIT_DATA;
   ForceReadNextCycle = 1;
   followMeInit = false;
-
+  if (this->flow_control_pin_ != nullptr) {
+    this->flow_control_pin_->setup();
+  }
   // Register custom modes on the Climate base class. ESPHome 2026.4.0
   // deprecated the equivalent ClimateTraits setters in favor of these.
   this->set_supported_custom_presets(this->supported_custom_presets_);
@@ -127,13 +128,18 @@ void ClimateMideaXYE::sendRecv(uint8_t cmdSent) {
   // digitalWrite(ComControlPin, RS485_TX_PIN_VALUE);
   // Log outgoing message at debug level
   tx_data.print_debug(Constants::TAG, TX_MESSAGE_LENGTH, ESPHOME_LOG_LEVEL_DEBUG);
+  if (this->flow_control_pin_ != nullptr) {
+    this->flow_control_pin_->digital_write(true);
+  }
   this->uart_->write_array(tx_data.raw, TX_MESSAGE_LENGTH);
   this->uart_->flush();
   controlState = ControlState::WAIT_DATA;
+  // digitalWrite(ComControlPin, RS485_RX_PIN_VALUE);
+  if (this->flow_control_pin_ != nullptr) {
+    this->flow_control_pin_->digital_write(false);
+  }
   // Delay for response_timeout ms to allow response from the AC unit.
   this->set_timeout("read-result", this->response_timeout, [this, cmdSent]() {
-    // digitalWrite(ComControlPin, RS485_RX_PIN_VALUE);
-
     uint8_t i = 0;
     while (this->uart_->available()) {
       if (i < RX_MESSAGE_LENGTH)

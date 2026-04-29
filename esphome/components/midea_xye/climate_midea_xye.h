@@ -119,6 +119,7 @@ class ClimateMideaXYE : public PollingComponent, public climate::Climate, public
   void set_uart_parent(uart::UARTComponent *parent) { this->uart_ = parent; }
   void set_period(uint32_t ms) { this->set_update_interval(ms); }
   void set_response_timeout(uint32_t ms) { this->response_timeout = ms; }
+  void set_flow_control_pin(GPIOPin *flow_control_pin) { this->flow_control_pin_ = flow_control_pin; }
 
   /* Component methods */
 
@@ -190,6 +191,8 @@ class ClimateMideaXYE : public PollingComponent, public climate::Climate, public
   // ignored after we issue a SET. Prevents a transient mode flap
   // (e.g. cool -> off -> cool) while the unit acknowledges the new mode.
   uint8_t post_set_grace_{0};
+
+  GPIOPin *flow_control_pin_{nullptr};
 
  protected:
   uart::UARTComponent *uart_;

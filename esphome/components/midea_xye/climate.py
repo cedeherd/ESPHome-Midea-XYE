@@ -1,5 +1,7 @@
 from esphome.core import coroutine
 from esphome import automation
+from esphome.cpp_helpers import gpio_pin_expression
+from esphome import pins
 from esphome.components import binary_sensor, climate, sensor, uart, remote_transmitter, number
 from esphome.components.remote_base import CONF_TRANSMITTER_ID
 import esphome.config_validation as cv
@@ -21,6 +23,7 @@ from esphome.const import (
     CONF_MIN_VALUE,
     CONF_ICON,
     CONF_MODE,
+    CONF_FLOW_CONTROL_PIN,
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_HUMIDITY,
@@ -249,6 +252,8 @@ CONFIG_SCHEMA = cv.All(
                 icon="mdi:snowflake-thermometer",
                 entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             ),
+            cv.Optional(CONF_FLOW_CONTROL_PIN): pins.gpio_output_pin_schema,
+
         }
     )
     .extend(uart.UART_DEVICE_SCHEMA)
@@ -369,6 +374,9 @@ async def to_code(config):
     cg.add(var.set_period(config[CONF_PERIOD].total_milliseconds))
     cg.add(var.set_response_timeout(config[CONF_TIMEOUT].total_milliseconds))
     cg.add(var.set_use_fahrenheit(config[CONF_USE_FAHRENHEIT]))
+    if CONF_FLOW_CONTROL_PIN in config:
+        pin = await gpio_pin_expression(config[CONF_FLOW_CONTROL_PIN])
+        cg.add(var.set_flow_control_pin(pin))
     if CONF_TRANSMITTER_ID in config:
         cg.add_define("USE_REMOTE_TRANSMITTER")
         transmitter_ = await cg.get_variable(config[CONF_TRANSMITTER_ID])
