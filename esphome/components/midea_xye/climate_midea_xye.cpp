@@ -68,6 +68,7 @@ void ClimateMideaXYE::setup() {
   queuedCommand = ControlState::WAIT_DATA;
   ForceReadNextCycle = 1;
   followMeInit = false;
+  FlowControlPin = 5;  // On 8266 D1/IO5
 
   // Register custom modes on the Climate base class. ESPHome 2026.4.0
   // deprecated the equivalent ClimateTraits setters in favor of these.
@@ -127,13 +128,14 @@ void ClimateMideaXYE::sendRecv(uint8_t cmdSent) {
   // digitalWrite(ComControlPin, RS485_TX_PIN_VALUE);
   // Log outgoing message at debug level
   tx_data.print_debug(Constants::TAG, TX_MESSAGE_LENGTH, ESPHOME_LOG_LEVEL_DEBUG);
+  digitalWrite(FlowControlPin, true);
   this->uart_->write_array(tx_data.raw, TX_MESSAGE_LENGTH);
   this->uart_->flush();
   controlState = ControlState::WAIT_DATA;
   // Delay for response_timeout ms to allow response from the AC unit.
   this->set_timeout("read-result", this->response_timeout, [this, cmdSent]() {
     // digitalWrite(ComControlPin, RS485_RX_PIN_VALUE);
-
+    digitalWrite(FlowControlPin, false);
     uint8_t i = 0;
     while (this->uart_->available()) {
       if (i < RX_MESSAGE_LENGTH)

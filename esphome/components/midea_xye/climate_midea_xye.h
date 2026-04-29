@@ -191,6 +191,8 @@ class ClimateMideaXYE : public PollingComponent, public climate::Climate, public
   // (e.g. cool -> off -> cool) while the unit acknowledges the new mode.
   uint8_t post_set_grace_{0};
 
+  uint8_t FlowControlPin{0};
+
  protected:
   uart::UARTComponent *uart_;
 #ifdef USE_REMOTE_TRANSMITTER
