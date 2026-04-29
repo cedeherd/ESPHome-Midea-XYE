@@ -446,7 +446,7 @@ climate::ClimateTraits ClimateMideaXYE::traits() {
 
 void ClimateMideaXYE::dump_config() {
   ESP_LOGCONFIG(Constants::TAG, "MideaXYE:");
-  log_pin(Constants::TAG, "  Flow Control Pin: ", this->flow_control_pin_);
+  log_pin(Constants::TAG, F"  Flow Control Pin: ", this->flow_control_pin_);
   ESP_LOGCONFIG(Constants::TAG, "  [x] Period: %dms", this->get_update_interval());
   ESP_LOGCONFIG(Constants::TAG, "  [x] Response timeout: %dms", this->response_timeout);
   ESP_LOGCONFIG(Constants::TAG, "  [x] Use Fahrenheit: %d", this->use_fahrenheit_);
