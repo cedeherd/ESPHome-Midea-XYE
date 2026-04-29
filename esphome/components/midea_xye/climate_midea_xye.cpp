@@ -68,8 +68,9 @@ void ClimateMideaXYE::setup() {
   queuedCommand = ControlState::WAIT_DATA;
   ForceReadNextCycle = 1;
   followMeInit = false;
-  FlowControlPin = 5;  // On 8266 D1/IO5
-
+  if (this->flow_control_pin_ != nullptr) {
+    this->flow_control_pin_->setup();
+  }
   // Register custom modes on the Climate base class. ESPHome 2026.4.0
   // deprecated the equivalent ClimateTraits setters in favor of these.
   this->set_supported_custom_presets(this->supported_custom_presets_);
@@ -128,14 +129,18 @@ void ClimateMideaXYE::sendRecv(uint8_t cmdSent) {
   // digitalWrite(ComControlPin, RS485_TX_PIN_VALUE);
   // Log outgoing message at debug level
   tx_data.print_debug(Constants::TAG, TX_MESSAGE_LENGTH, ESPHOME_LOG_LEVEL_DEBUG);
-  digitalWrite(FlowControlPin, true);
+  if (this->flow_control_pin_ != nullptr) {
+    this->flow_control_pin_->digital_write(true);
+  }
   this->uart_->write_array(tx_data.raw, TX_MESSAGE_LENGTH);
   this->uart_->flush();
   controlState = ControlState::WAIT_DATA;
   // Delay for response_timeout ms to allow response from the AC unit.
   this->set_timeout("read-result", this->response_timeout, [this, cmdSent]() {
     // digitalWrite(ComControlPin, RS485_RX_PIN_VALUE);
-    digitalWrite(FlowControlPin, false);
+    if (this->flow_control_pin_ != nullptr) {
+      this->flow_control_pin_->digital_write(false);
+    }
     uint8_t i = 0;
     while (this->uart_->available()) {
       if (i < RX_MESSAGE_LENGTH)
@@ -442,6 +447,7 @@ climate::ClimateTraits ClimateMideaXYE::traits() {
 
 void ClimateMideaXYE::dump_config() {
   ESP_LOGCONFIG(Constants::TAG, "MideaXYE:");
+  LOG_PIN("  Flow Control Pin: ", this->flow_control_pin_);
   ESP_LOGCONFIG(Constants::TAG, "  [x] Period: %dms", this->get_update_interval());
   ESP_LOGCONFIG(Constants::TAG, "  [x] Response timeout: %dms", this->response_timeout);
   ESP_LOGCONFIG(Constants::TAG, "  [x] Use Fahrenheit: %d", this->use_fahrenheit_);
