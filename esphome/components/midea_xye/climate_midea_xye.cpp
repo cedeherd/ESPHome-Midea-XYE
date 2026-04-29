@@ -1,8 +1,7 @@
 #ifdef USE_ARDUINO
 
-#include "climate_midea_xye.h"
-
 #include "esphome/core/log.h"
+#include "climate_midea_xye.h"
 
 namespace esphome {
 namespace midea {
